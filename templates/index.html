@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>python data viz</title>
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.2.1/chart.min.js" integrity="sha512-tOcHADT+YGCQqH7YO99uJdko6L8Qk5oudLN6sCeI4BQnpENq6riR6x9Im+SGzhXpgooKBRkPsget4EOoH5jNCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script type="text/javascript" charset="utf-8">
+		$(document).ready(function() {
+			var socket = io();
+			socket.on('connect', function() {
+				console.log('connected');
+				socket.emit('my_event', {data: 'im connected'});
+			});
+			
+			socket.on('my_response', function(msg, cb) {
+				var temps = msg.data
+				console.log(temps)
+				var TESTER = document.getElementById('tester');
+				var layout = {
+					title:'line and scatter plot'
+				};
+				Plotly.newPlot(TESTER, temps, layout);
+				$('#log').append('<br>' + $('<div/>').text('received #' + msg.count + ': ' + msg.time +'ms : ' + msg.data).html());
+				if (cb)
+					cb();
+			});
+
+			var ping_pong_times = [];
+			var start_time;
+			window.setInterval(function() {
+				start_time = (new Date).getTime();
+				$('#transport').text(socket.io.engine.transport.name);
+				socket.emit('my_ping');
+			}, 1000);
+
+			socket.on('my_pong', function() {
+				var latency = (new Date).getTime() - start_time;
+				ping_pong_times.push(latency);
+				ping_pong_times = ping_pong_times.slice(-30)
+				var sum = 0;
+				for (var i=0; i < ping_pong_times.length; i++)
+					sum += ping_pong_times[i]
+				$('#ping-pong').text(Math.round(10 * sum / ping_pong_times.length) / 10);
+			});
+		});
+	</script>
+</head>
+<body>
+	<h1>ir camera data viz</h1>
+	<p>
+	async mode is : <b> {{ async_mode }}</b><br>
+	current transport is : <b><span id="transport"></span</b><br>
+	average latency is : <b><span id="ping-pong"></span>ms</b>
+	</p>
+	<div id="tester" style="width:600px;height:400px;"></div>
+	<h2>received:</h2>
+	<div id="log"></div>
+</body>
+</html>
