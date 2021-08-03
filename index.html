@@ -1,51 +1,97 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
 	<title>python data viz</title>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+	<script src='https://cdn.plot.ly/plotly-2.3.0.min.js'></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+		integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
+		crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"
+		integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ=="
+		crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.2.1/chart.min.js"
+		integrity="sha512-tOcHADT+YGCQqH7YO99uJdko6L8Qk5oudLN6sCeI4BQnpENq6riR6x9Im+SGzhXpgooKBRkPsget4EOoH5jNCw=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<script type="text/javascript" charset="utf-8">
-		$(document).ready(function() {
+		$(document).ready(function () {
 			var socket = io();
-			socket.on('connect', function() {
+			socket.on('connect', function () {
 				console.log('connected');
-				socket.emit('my_event', {data: 'im connected'});
-			}):
-			
-			socket.on('my_response', function(msg, cb) {
-				$('#log').append('<br> + $('<div/>').text('received #' + msg.count + ': ' + msg.data).html());
-				if (cb)
-					cb();
+				socket.emit('my_event', { data: 'im connected' });
 			});
+
+			//socket.on('my_response', function (msg, cb) {
+			//plot 1 (sensor avg reading vs local temp readings from third-party)
+			var trace1 = {
+				x: [1, 2, 3, 4],
+				y: [10, 15, 13, 17],
+				type: 'scatter'
+			};
+
+			var trace2 = {
+				x: [1, 2, 3, 4],
+				y: [16, 5, 11, 9],
+				type: 'scatter'
+			};
+
+			var data = [trace1, trace2];
+			var div1 = document.getElementById('myDiv');
+			Plotly.newPlot(div1, data);
+
+			//plot 2 (heatmap)
+			var data = [
+				{
+					z: [[25.7, 24.3, 26.3, 26.3, 27.6, 29.1, 28.4, 26.0], [24.7, 25.3, 25.3, 25.3, 27.6, 27.1, 27.4, 27.0], [24.7, 23.3, 25.3, 25.3, 26.6, 28.1, 27.4, 25.0], [24.7, 23.3, 25.3, 25.3, 26.6, 28.1, 29.4, 25.0], [24.7, 23.3, 28.3, 24.3, 22.6, 26.1, 29.4, 26.2], [25.9, 24.8, 26.7, 26.2, 27.4, 29.2, 28.7, 26.2], [22.7, 24.4, 26.7, 26.3, 22.6, 25.1, 29.4, 26.2], [25.7, 24.3, 26.3, 28.3, 24.6, 29.5, 27.4, 26.2]],
+					x: ['0', '1', '2', '3', '4', '5', '6', '7'],
+					y: ['0', '1', '2', '3', '4', '5', '6', '7'],
+					type: 'heatmap',
+					hoverongaps: false
+				}
+			];
+			
+			var div2 = document.getElementById('myDiv2');
+			var config = { responsive: true }
+			Plotly.newPlot(div2, data, config);
+
+			$('#log').append('<br>' + $('<div/>').text('received #' + msg.count + ': ' + msg.time + 'ms : ' + msg.data).html());
+			if (cb)
+				cb();
+			//});
 
 			var ping_pong_times = [];
 			var start_time;
-			window.setInterval(function() {
+			window.setInterval(function () {
 				start_time = (new Date).getTime();
 				$('#transport').text(socket.io.engine.transport.name);
-				socket.emit('my_ping);
+				socket.emit('my_ping');
 			}, 1000);
 
-			socket.on('my_pong', function() {
+			socket.on('my_pong', function () {
 				var latency = (new Date).getTime() - start_time;
 				ping_pong_times.push(latency);
 				ping_pong_times = ping_pong_times.slice(-30)
 				var sum = 0;
-				for (var i=0; i < ping_pong_times.length; i++)
+				for (var i = 0; i < ping_pong_times.length; i++)
 					sum += ping_pong_times[i]
 				$('#ping-pong').text(Math.round(10 * sum / ping_pong_times.length) / 10);
 			});
 		});
 	</script>
 </head>
+
 <body>
 	<h1>ir camera data viz</h1>
 	<p>
-	async mode is : <b> {{ async_mode }}</b><br>
-	current transport is : <b><span id="transport"></span</b><br>
-	average latency is : <b><span id="ping-pong"></span>ms</b>
+		async mode is : <b> {{ async_mode }}</b><br>
+		current transport is : <b><span id="transport"></span</b> <br>
+				average latency is : <b><span id="ping-pong"></span>ms</b>
 	</p>
-	<h2>received:</h2>
-	<div id="log"></div>
+	<div id="myDiv"></div>
+	<div id="myDiv2"></div>
+	<div id="myDiv3">
+		<h2>received:</h2>
+		<div id="log"></div>
 </body>
+
 </html>
