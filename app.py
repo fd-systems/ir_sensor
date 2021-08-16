@@ -24,6 +24,9 @@ _data  = dict()
 def getData():
     global _data
     data = amg.pixels
+    for i in range(len(data)):
+        for j in range(0,7):
+            data[i][j] = str(data[i][j])
     _data = json.dumps(data) 
 
 def background_thread():
