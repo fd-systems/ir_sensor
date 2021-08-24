@@ -1,4 +1,5 @@
-# FDSystems IR sensor prototype
+# prototype ir camera 
 
 ### Hardware: RaspberryPi3 & Amg88xx IR sensor
-data is visualized realtime using websockets and plot.ly
+raspberry pi is hosting a flask server which transmits data from a panasonic 8x8 ir camera to a frontend view
+data is visualized graphically using plot.ly
